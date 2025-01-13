@@ -15,9 +15,12 @@ export type Database = {
           author_id: string | null
           content: string
           created_at: string
+          entry_price: number | null
           id: string
           publish_date: string | null
           risk_level: Database["public"]["Enums"]["user_risk_level"]
+          stop_loss: number | null
+          target_price: number | null
           title: string
           updated_at: string
         }
@@ -26,9 +29,12 @@ export type Database = {
           author_id?: string | null
           content: string
           created_at?: string
+          entry_price?: number | null
           id?: string
           publish_date?: string | null
           risk_level: Database["public"]["Enums"]["user_risk_level"]
+          stop_loss?: number | null
+          target_price?: number | null
           title: string
           updated_at?: string
         }
@@ -37,9 +43,12 @@ export type Database = {
           author_id?: string | null
           content?: string
           created_at?: string
+          entry_price?: number | null
           id?: string
           publish_date?: string | null
           risk_level?: Database["public"]["Enums"]["user_risk_level"]
+          stop_loss?: number | null
+          target_price?: number | null
           title?: string
           updated_at?: string
         }
