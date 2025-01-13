@@ -18,32 +18,28 @@ const Register = () => {
       if (event === "SIGNED_IN") {
         navigate("/assessment");
       }
-      // Clear error when auth state changes
       if (event === "SIGNED_OUT") {
         setError(null);
       }
     });
 
-    // Set up error handling for auth state changes
-    const handleAuthError = (error: AuthError) => {
-      console.error("Auth error:", error);
-      if (error.message.includes("User already registered")) {
-        setError("This email is already registered. Please try logging in instead.");
-      } else {
-        setError(error.message);
+    // Handle auth errors through the auth state change listener
+    const handleAuthError = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Auth error:", error);
+        if (error.message.includes("User already registered")) {
+          setError("This email is already registered. Please try logging in instead.");
+        } else {
+          setError(error.message);
+        }
       }
     };
 
-    // Subscribe to auth errors using the correct method
-    const authListener = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "USER_REGISTRATION_ERROR") {
-        handleAuthError(new AuthError("Registration failed"));
-      }
-    });
+    handleAuthError();
 
     return () => {
       subscription.unsubscribe();
-      authListener.data.subscription.unsubscribe();
     };
   }, [navigate]);
 
