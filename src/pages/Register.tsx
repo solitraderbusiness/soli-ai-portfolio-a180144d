@@ -13,16 +13,31 @@ const Register = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN") {
         navigate("/assessment");
       }
-      if (event === "USER_REGISTRATION_ERROR") {
-        setError("This email is already registered. Please try logging in instead.");
+      if (event === "SIGNED_UP") {
+        // This ensures we catch successful registrations
+        console.log("User signed up successfully");
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Set up error handling for auth state changes
+    const handleAuthError = (err: Error) => {
+      console.error("Auth error:", err);
+      if (err.message.includes("User already registered")) {
+        setError("This email is already registered. Please try logging in instead.");
+      }
+    };
+
+    // Subscribe to auth errors
+    const { data: { subscription: errorSubscription } } = supabase.auth.onError(handleAuthError);
+
+    return () => {
+      subscription.unsubscribe();
+      errorSubscription.unsubscribe();
+    };
   }, [navigate]);
 
   return (
