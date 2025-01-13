@@ -11,12 +11,12 @@ import {
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Analysis } from "@/types/analysis";
+import { Analysis, RiskLevel } from "@/types/analysis";
 import { useToast } from "@/hooks/use-toast";
 
 const PortfolioDashboard = () => {
   const { toast } = useToast();
-  const [userRiskLevel, setUserRiskLevel] = useState<string | null>(null);
+  const [userRiskLevel, setUserRiskLevel] = useState<RiskLevel | null>(null);
 
   // Fetch user's risk level
   const { data: profile } = useQuery({
@@ -56,7 +56,7 @@ const PortfolioDashboard = () => {
 
   useEffect(() => {
     if (profile?.risk_level) {
-      setUserRiskLevel(profile.risk_level);
+      setUserRiskLevel(profile.risk_level as RiskLevel);
     }
   }, [profile]);
 
