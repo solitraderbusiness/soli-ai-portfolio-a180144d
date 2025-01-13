@@ -25,16 +25,40 @@ const Login = () => {
 
     // Listen for auth errors
     const handleAuthError = (error: AuthError) => {
-      if (error.message.includes("Invalid login credentials")) {
-        setError("Invalid email or password. Please check your credentials and try again.");
-      } else {
-        setError(error.message);
+      console.log("Auth error:", error); // For debugging
+      
+      // Parse the error message from the response body if available
+      let errorBody;
+      try {
+        errorBody = JSON.parse(error.message);
+      } catch {
+        errorBody = null;
+      }
+
+      const errorCode = errorBody?.code || error.message;
+      
+      switch(errorCode) {
+        case "user_already_exists":
+          setError("This email is already registered. Please try logging in instead.");
+          break;
+        case "invalid_credentials":
+          setError("Invalid email or password. Please check your credentials and try again.");
+          break;
+        default:
+          setError(error.message);
       }
     };
 
     const authListener = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "USER_UPDATED" && !session) {
         handleAuthError({ message: "Authentication failed" } as AuthError);
+      }
+    });
+
+    // Add error handling for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "USER_DELETED" || event === "SIGNED_OUT") {
+        setError(null);
       }
     });
 
@@ -60,6 +84,10 @@ const Login = () => {
               appearance={{ theme: ThemeSupa }}
               theme="light"
               providers={[]}
+              onError={(error) => {
+                console.log("Auth UI error:", error); // For debugging
+                handleAuthError(error);
+              }}
             />
           </CardContent>
         </Card>
