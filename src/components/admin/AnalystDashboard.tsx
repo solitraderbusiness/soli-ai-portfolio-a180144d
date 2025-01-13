@@ -33,6 +33,7 @@ interface Analysis {
   stop_loss?: number;
   target_price?: number;
   created_at: Date;
+  author_id: string;
 }
 
 const AnalystDashboard = () => {
@@ -63,9 +64,12 @@ const AnalystDashboard = () => {
   // Create analysis mutation
   const createAnalysis = useMutation({
     mutationFn: async (newAnalysis: Omit<Analysis, 'id' | 'created_at'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       const { data, error } = await supabase
         .from('analysis_posts')
-        .insert([newAnalysis])
+        .insert([{ ...newAnalysis, author_id: user.id }])
         .select()
         .single();
 
@@ -106,8 +110,11 @@ const AnalystDashboard = () => {
       entry_price: entryPrice ? parseFloat(entryPrice) : undefined,
       stop_loss: stopLoss ? parseFloat(stopLoss) : undefined,
       target_price: targetPrice ? parseFloat(targetPrice) : undefined,
+      author_id: "", // This will be set in the mutation function
     });
   };
+
+  // ... keep existing code (form JSX)
 
   return (
     <div className="space-y-6">
