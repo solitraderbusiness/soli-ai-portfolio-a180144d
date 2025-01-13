@@ -15,53 +15,59 @@ function App() {
     <Router>
       <Toaster />
       <NavBar />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+      <div className="min-h-screen bg-gray-50 pt-16"> {/* Added padding-top to account for fixed navbar */}
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* Protected routes for all authenticated users */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/risk-assessment"
-          element={
-            <ProtectedRoute>
-              <div className="container mx-auto py-12 flex justify-center">
-                <RiskAssessment />
-              </div>
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected routes for all authenticated users */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/risk-assessment"
+            element={
+              <ProtectedRoute>
+                <div className="container mx-auto py-12 flex justify-center">
+                  <RiskAssessment />
+                </div>
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Protected routes for analysts only */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute roleRequired="analyst">
-              <AnalystDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/daily-analyses/:date"
-          element={
-            <ProtectedRoute roleRequired="analyst">
-              <DailyAnalyses />
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected routes for analysts only */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roleRequired="analyst">
+                <div className="container mx-auto py-12">
+                  <AnalystDashboard />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/daily-analyses/:date"
+            element={
+              <ProtectedRoute roleRequired="analyst">
+                <div className="container mx-auto py-12">
+                  <DailyAnalyses />
+                </div>
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Catch all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
     </Router>
   );
 }
