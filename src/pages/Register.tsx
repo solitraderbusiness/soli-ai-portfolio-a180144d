@@ -7,6 +7,7 @@ import NavBar from "@/components/shared/NavBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
+import { AuthError } from "@supabase/supabase-js";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -17,26 +18,32 @@ const Register = () => {
       if (event === "SIGNED_IN") {
         navigate("/assessment");
       }
-      if (event === "SIGNED_UP") {
-        // This ensures we catch successful registrations
-        console.log("User signed up successfully");
+      // Clear error when auth state changes
+      if (event === "SIGNED_OUT") {
+        setError(null);
       }
     });
 
     // Set up error handling for auth state changes
-    const handleAuthError = (err: Error) => {
-      console.error("Auth error:", err);
-      if (err.message.includes("User already registered")) {
+    const handleAuthError = (error: AuthError) => {
+      console.error("Auth error:", error);
+      if (error.message.includes("User already registered")) {
         setError("This email is already registered. Please try logging in instead.");
+      } else {
+        setError(error.message);
       }
     };
 
-    // Subscribe to auth errors
-    const { data: { subscription: errorSubscription } } = supabase.auth.onError(handleAuthError);
+    // Subscribe to auth errors using the correct method
+    const authListener = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_UP" && !session) {
+        handleAuthError(new AuthError("Registration failed"));
+      }
+    });
 
     return () => {
       subscription.unsubscribe();
-      errorSubscription.unsubscribe();
+      authListener.data.subscription.unsubscribe();
     };
   }, [navigate]);
 
