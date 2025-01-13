@@ -34,9 +34,24 @@ export const CreateAnalysisForm = () => {
 
   const createAnalysis = useMutation({
     mutationFn: async (newAnalysis: CreateAnalysisInput) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // First, get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
       if (!user) throw new Error("User not authenticated");
 
+      // Then, check if the user is an analyst
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) throw profileError;
+      if (!profile || (profile.role !== 'analyst' && profile.role !== 'admin')) {
+        throw new Error("User is not authorized to create analysis posts");
+      }
+
+      // Finally, create the analysis post
       const { data, error } = await supabase
         .from('analysis_posts')
         .insert([{ ...newAnalysis, author_id: user.id }])
@@ -59,10 +74,10 @@ export const CreateAnalysisForm = () => {
       setStopLoss("");
       setTargetPrice("");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to post analysis. Please try again.",
+        description: error.message || "Failed to post analysis. Please try again.",
         variant: "destructive",
       });
       console.error("Error creating analysis:", error);
@@ -77,9 +92,9 @@ export const CreateAnalysisForm = () => {
       content,
       risk_level: riskLevel,
       asset_type: assetType,
-      entry_price: entryPrice ? parseFloat(entryPrice) : undefined,
-      stop_loss: stopLoss ? parseFloat(stopLoss) : undefined,
-      target_price: targetPrice ? parseFloat(targetPrice) : undefined,
+      entry_price: entryPrice ? parseFloat(entryPrice) : null,
+      stop_loss: stopLoss ? parseFloat(stopLoss) : null,
+      target_price: targetPrice ? parseFloat(targetPrice) : null,
       author_id: "", // This will be set in the mutation function
     });
   };
