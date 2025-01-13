@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
-import NavBar from "@/components/shared/NavBar";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavBar />
       <div className="container mx-auto py-24">
         <div className="text-center space-y-6">
           <h1 className="text-5xl font-bold text-primary">
