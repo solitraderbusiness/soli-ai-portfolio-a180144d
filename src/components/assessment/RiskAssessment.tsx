@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const questions = [
   {
@@ -40,12 +41,49 @@ const questions = [
   },
 ];
 
+const calculateRiskLevel = (answers: Record<number, string>): "Low" | "Medium" | "High" => {
+  let riskScore = 0;
+
+  // Time horizon scoring
+  const timeHorizonMap: Record<string, number> = {
+    "1-3 years": 1,
+    "3-5 years": 2,
+    "5-10 years": 3,
+    "10+ years": 4,
+  };
+  riskScore += timeHorizonMap[answers[1]] || 0;
+
+  // Experience scoring
+  const experienceMap: Record<string, number> = {
+    "None": 1,
+    "Some": 2,
+    "Moderate": 3,
+    "Extensive": 4,
+  };
+  riskScore += experienceMap[answers[2]] || 0;
+
+  // Investment goal scoring
+  const goalMap: Record<string, number> = {
+    "Capital preservation": 1,
+    "Income generation": 2,
+    "Balanced growth": 3,
+    "Aggressive growth": 4,
+  };
+  riskScore += goalMap[answers[3]] || 0;
+
+  // Calculate final risk level
+  const avgScore = riskScore / 3;
+  if (avgScore <= 2) return "Low";
+  if (avgScore <= 3) return "Medium";
+  return "High";
+};
+
 const RiskAssessment = () => {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (Object.keys(answers).length !== questions.length) {
       toast({
@@ -55,12 +93,33 @@ const RiskAssessment = () => {
       });
       return;
     }
-    // TODO: Calculate risk profile based on answers
-    toast({
-      title: "Success",
-      description: "Risk assessment completed",
-    });
-    navigate("/dashboard");
+
+    try {
+      const riskLevel = calculateRiskLevel(answers);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          risk_level: riskLevel,
+          personality_profile: answers
+        })
+        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Risk assessment completed",
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('Error saving risk assessment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save risk assessment",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
