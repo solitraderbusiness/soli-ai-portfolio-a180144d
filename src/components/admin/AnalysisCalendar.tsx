@@ -47,19 +47,7 @@ export const AnalysisCalendar = () => {
     
     setDate(selectedDate);
     const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-    
-    // Filter analyses for the selected date
-    const dayAnalyses = analyses?.filter(analysis => {
-      if (!analysis.publish_date) return false;
-      return format(new Date(analysis.publish_date), 'yyyy-MM-dd') === formattedDate;
-    });
-
-    if (dayAnalyses && dayAnalyses.length > 0) {
-      // For now, we'll show a toast with the count. You can implement a modal or navigation later
-      toast.info(`${dayAnalyses.length} analyses found for ${format(selectedDate, 'MMMM d, yyyy')}`);
-    } else {
-      toast.info(`No analyses found for ${format(selectedDate, 'MMMM d, yyyy')}`);
-    }
+    navigate(`/daily-analyses/${formattedDate}`);
   };
 
   return (
@@ -67,7 +55,13 @@ export const AnalysisCalendar = () => {
       <CardHeader>
         <CardTitle>Analysis Calendar</CardTitle>
       </CardHeader>
-      <CardContent className="flex justify-center">
+      <CardContent>
+        <div className="mb-4 flex gap-4 items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+            <span className="text-sm text-gray-600">Has Analyses</span>
+          </div>
+        </div>
         <Calendar
           mode="single"
           selected={date}
@@ -81,8 +75,8 @@ export const AnalysisCalendar = () => {
           }}
           modifiersStyles={{
             hasAnalysis: {
-              fontWeight: 'bold',
-              backgroundColor: '#e2e8f0',
+              color: 'white',
+              backgroundColor: '#3b82f6',
             },
           }}
         />
