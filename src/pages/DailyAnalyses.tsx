@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Analysis } from "@/types/analysis";
 import NavBar from "@/components/shared/NavBar";
@@ -15,8 +15,15 @@ const DailyAnalyses = () => {
     queryFn: async () => {
       if (!date) throw new Error("No date provided");
       
-      const startOfDay = new Date(date);
-      const endOfDay = new Date(date);
+      // Validate the date format
+      const parsedDate = parseISO(date);
+      if (!isValid(parsedDate)) {
+        toast.error("Invalid date format");
+        throw new Error("Invalid date format");
+      }
+
+      const startOfDay = parsedDate;
+      const endOfDay = new Date(parsedDate);
       endOfDay.setDate(endOfDay.getDate() + 1);
 
       const { data, error } = await supabase
@@ -34,8 +41,10 @@ const DailyAnalyses = () => {
     },
   });
 
-  // Safely parse the date parameter
-  const formattedDate = date ? format(parseISO(date), 'MMMM d, yyyy') : '';
+  // Safely format the date for display
+  const formattedDate = date && isValid(parseISO(date)) 
+    ? format(parseISO(date), 'MMMM d, yyyy')
+    : 'Invalid Date';
 
   return (
     <div className="min-h-screen bg-gray-50">
