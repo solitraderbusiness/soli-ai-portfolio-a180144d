@@ -36,7 +36,7 @@ const Register = () => {
 
     // Subscribe to auth errors using the correct method
     const authListener = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_UP" && !session) {
+      if (event === "USER_REGISTRATION_ERROR") {
         handleAuthError(new AuthError("Registration failed"));
       }
     });
