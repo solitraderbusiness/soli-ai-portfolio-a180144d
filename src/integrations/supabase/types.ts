@@ -9,7 +9,203 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      analysis_posts: {
+        Row: {
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          author_id: string | null
+          content: string
+          created_at: string
+          id: string
+          publish_date: string | null
+          risk_level: Database["public"]["Enums"]["user_risk_level"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          author_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          publish_date?: string | null
+          risk_level: Database["public"]["Enums"]["user_risk_level"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: Database["public"]["Enums"]["asset_type"]
+          author_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          publish_date?: string | null
+          risk_level?: Database["public"]["Enums"]["user_risk_level"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analysis_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_interactions: {
+        Row: {
+          ai_inferred_traits: Json | null
+          created_at: string
+          id: string
+          message_text: string
+          response_text: string | null
+          user_id: string | null
+        }
+        Insert: {
+          ai_inferred_traits?: Json | null
+          created_at?: string
+          id?: string
+          message_text: string
+          response_text?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          ai_inferred_traits?: Json | null
+          created_at?: string
+          id?: string
+          message_text?: string
+          response_text?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_interactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_recommendations: {
+        Row: {
+          ai_recommendation: Json
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          ai_recommendation: Json
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          ai_recommendation?: Json
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          investment_bracket:
+            | Database["public"]["Enums"]["investment_bracket"]
+            | null
+          personality_profile: Json | null
+          risk_level: Database["public"]["Enums"]["user_risk_level"] | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          investment_bracket?:
+            | Database["public"]["Enums"]["investment_bracket"]
+            | null
+          personality_profile?: Json | null
+          risk_level?: Database["public"]["Enums"]["user_risk_level"] | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          investment_bracket?:
+            | Database["public"]["Enums"]["investment_bracket"]
+            | null
+          personality_profile?: Json | null
+          risk_level?: Database["public"]["Enums"]["user_risk_level"] | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      signals: {
+        Row: {
+          analysis_id: string | null
+          commentary: string | null
+          created_at: string
+          entry_price: number
+          id: string
+          risk_level: Database["public"]["Enums"]["user_risk_level"]
+          status: Database["public"]["Enums"]["signal_status"] | null
+          stop_loss: number | null
+          target_price: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          commentary?: string | null
+          created_at?: string
+          entry_price: number
+          id?: string
+          risk_level: Database["public"]["Enums"]["user_risk_level"]
+          status?: Database["public"]["Enums"]["signal_status"] | null
+          stop_loss?: number | null
+          target_price?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_id?: string | null
+          commentary?: string | null
+          created_at?: string
+          entry_price?: number
+          id?: string
+          risk_level?: Database["public"]["Enums"]["user_risk_level"]
+          status?: Database["public"]["Enums"]["signal_status"] | null
+          stop_loss?: number | null
+          target_price?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signals_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +214,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      asset_type: "Stocks" | "Gold" | "Crypto" | "Forex" | "ETFs"
+      investment_bracket: "under_10k" | "10k_to_50k" | "over_50k"
+      signal_status: "active" | "closed" | "revised"
+      user_risk_level: "Low" | "Medium" | "High"
+      user_role: "user" | "analyst" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never

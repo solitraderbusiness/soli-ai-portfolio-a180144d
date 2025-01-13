@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 type RiskLevel = "Low" | "Medium" | "High";
 type AssetType = "Stocks" | "Gold" | "Crypto" | "Forex" | "ETFs";
@@ -25,12 +27,12 @@ interface Analysis {
   id: string;
   title: string;
   content: string;
-  riskLevel: RiskLevel;
-  assetType: AssetType;
-  entryPrice?: number;
-  stopLoss?: number;
-  targetPrice?: number;
-  createdAt: Date;
+  risk_level: RiskLevel;
+  asset_type: AssetType;
+  entry_price?: number;
+  stop_loss?: number;
+  target_price?: number;
+  created_at: Date;
 }
 
 const AnalystDashboard = () => {
@@ -42,37 +44,69 @@ const AnalystDashboard = () => {
   const [stopLoss, setStopLoss] = useState<string>("");
   const [targetPrice, setTargetPrice] = useState<string>("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch analysis posts
+  const { data: analyses, isLoading } = useQuery({
+    queryKey: ['analyses'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('analysis_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Create analysis mutation
+  const createAnalysis = useMutation({
+    mutationFn: async (newAnalysis: Omit<Analysis, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('analysis_posts')
+        .insert([newAnalysis])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['analyses'] });
+      toast({
+        title: "Success",
+        description: "Analysis posted successfully",
+      });
+      // Reset form
+      setTitle("");
+      setContent("");
+      setEntryPrice("");
+      setStopLoss("");
+      setTargetPrice("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to post analysis. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error creating analysis:", error);
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Create new analysis object
-    const newAnalysis: Analysis = {
-      id: Date.now().toString(),
+    createAnalysis.mutate({
       title,
       content,
-      riskLevel,
-      assetType,
-      entryPrice: entryPrice ? parseFloat(entryPrice) : undefined,
-      stopLoss: stopLoss ? parseFloat(stopLoss) : undefined,
-      targetPrice: targetPrice ? parseFloat(targetPrice) : undefined,
-      createdAt: new Date(),
-    };
-
-    // TODO: Implement actual post creation logic with backend integration
-    console.log("New Analysis:", newAnalysis);
-
-    toast({
-      title: "Success",
-      description: "Analysis posted successfully",
+      risk_level: riskLevel,
+      asset_type: assetType,
+      entry_price: entryPrice ? parseFloat(entryPrice) : undefined,
+      stop_loss: stopLoss ? parseFloat(stopLoss) : undefined,
+      target_price: targetPrice ? parseFloat(targetPrice) : undefined,
     });
-
-    // Reset form
-    setTitle("");
-    setContent("");
-    setEntryPrice("");
-    setStopLoss("");
-    setTargetPrice("");
   };
 
   return (
@@ -199,7 +233,12 @@ const AnalystDashboard = () => {
               />
             </div>
 
-            <Button type="submit">Post Analysis</Button>
+            <Button 
+              type="submit" 
+              disabled={createAnalysis.isPending}
+            >
+              {createAnalysis.isPending ? "Posting..." : "Post Analysis"}
+            </Button>
           </form>
         </CardContent>
       </Card>
@@ -209,46 +248,32 @@ const AnalystDashboard = () => {
           <CardTitle>Recent Analysis Posts</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {/* Mock data for demonstration */}
-            <div className="border-b pb-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">Market Outlook Q1 2024</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Analysis of market trends and predictions for Q1 2024...
-                  </p>
+          {isLoading ? (
+            <div>Loading analyses...</div>
+          ) : (
+            <div className="space-y-4">
+              {analyses?.map((analysis) => (
+                <div key={analysis.id} className="border-b pb-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-medium">{analysis.title}</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {analysis.content.substring(0, 150)}...
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        {analysis.asset_type}
+                      </span>
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                        {analysis.risk_level} Risk
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    Stocks
-                  </span>
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                    Medium Risk
-                  </span>
-                </div>
-              </div>
+              ))}
             </div>
-
-            <div className="border-b pb-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">Cryptocurrency Analysis</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Latest insights on cryptocurrency market movements...
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                    Crypto
-                  </span>
-                  <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
-                    High Risk
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>
