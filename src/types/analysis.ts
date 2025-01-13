@@ -7,11 +7,13 @@ export interface Analysis {
   content: string;
   risk_level: RiskLevel;
   asset_type: AssetType;
-  entry_price?: number;
-  stop_loss?: number;
-  target_price?: number;
-  created_at: Date;
-  author_id: string;
+  entry_price: number | null;
+  stop_loss: number | null;
+  target_price: number | null;
+  created_at: string;
+  updated_at: string;
+  publish_date: string | null;
+  author_id: string | null;
 }
 
-export type CreateAnalysisInput = Omit<Analysis, 'id' | 'created_at'>;
+export type CreateAnalysisInput = Omit<Analysis, 'id' | 'created_at' | 'updated_at' | 'publish_date'>;

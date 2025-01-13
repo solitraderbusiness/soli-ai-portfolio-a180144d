@@ -44,7 +44,7 @@ export const CreateAnalysisForm = () => {
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (profileError) throw profileError;
       if (!profile || (profile.role !== 'analyst' && profile.role !== 'admin')) {
