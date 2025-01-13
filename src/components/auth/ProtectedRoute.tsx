@@ -3,11 +3,25 @@ import { Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   roleRequired?: "analyst" | "admin";
 }
+
+const LoadingState = () => {
+  return (
+    <div className="w-full max-w-7xl mx-auto p-6 space-y-4">
+      <Skeleton className="h-8 w-1/3" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-[200px] w-full" />
+      </div>
+    </div>
+  );
+};
 
 const ProtectedRoute = ({ children, roleRequired }: ProtectedRouteProps) => {
   const [user, setUser] = useState<User | null>(null);
@@ -17,44 +31,79 @@ const ProtectedRoute = ({ children, roleRequired }: ProtectedRouteProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      try {
+        // Get the current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
 
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
+        if (mounted) {
+          setUser(session?.user ?? null);
 
-        setUserRole(profile?.role ?? null);
+          if (session?.user) {
+            // Get the user's profile
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', session.user.id)
+              .single();
+
+            if (profileError) throw profileError;
+
+            if (mounted) {
+              setUserRole(profile?.role ?? null);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error checking auth state:', error);
+        toast({
+          title: "Error",
+          description: "Failed to verify authentication status",
+          variant: "destructive",
+        });
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     };
 
     checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (mounted) {
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
 
-        setUserRole(profile?.role ?? null);
-      } else {
-        setUserRole(null);
+          if (mounted) {
+            setUserRole(profile?.role ?? null);
+          }
+        } else {
+          if (mounted) {
+            setUserRole(null);
+          }
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingState />;
   }
 
   if (!user) {
