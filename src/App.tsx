@@ -3,7 +3,7 @@ import { Toaster } from "sonner";
 import NavBar from "@/components/shared/NavBar";
 import AnalystDashboard from "@/components/admin/AnalystDashboard";
 import DailyAnalyses from "@/pages/DailyAnalyses";
-import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 function App() {
   return (
