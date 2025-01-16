@@ -3,13 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const NavBar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -52,26 +51,15 @@ const NavBar = () => {
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
+      await supabase.auth.signOut();
       setUser(null);
       setUserRole(null);
-      
-      toast({
-        title: "Success",
-        description: "You have been logged out successfully",
-      });
-
+      toast.success("Logged out successfully");
       navigate("/");
-      window.location.reload();
+      window.location.reload(); // Force a full page reload to clear all states
     } catch (error) {
       console.error("Error logging out:", error);
-      toast({
-        title: "Error",
-        description: "Failed to log out",
-        variant: "destructive",
-      });
+      toast.error("Failed to log out");
     }
   };
 
