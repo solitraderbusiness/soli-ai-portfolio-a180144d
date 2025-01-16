@@ -56,12 +56,13 @@ const NavBar = () => {
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await supabase.auth.signOut();
       
-      // Clear user state and navigate to home
+      // Clear user state
       setUser(null);
       setUserRole(null);
+      
+      // Navigate to home page
       navigate("/");
       
       toast({
