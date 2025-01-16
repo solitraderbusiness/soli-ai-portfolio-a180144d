@@ -11,7 +11,7 @@ export const AnalysisList = ({ isLoading, analyses }: AnalysisListProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Latest Analysis Recommendations</CardTitle>
+        <CardTitle>Latest Analysis & Signals</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -28,7 +28,7 @@ export const AnalysisList = ({ isLoading, analyses }: AnalysisListProps) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {analyses?.slice(0, 5).map((analysis) => (
+            {analyses?.map((analysis) => (
               <div key={analysis.id} className="border-b pb-4">
                 <h3 className="font-medium">{analysis.title}</h3>
                 <div className="flex gap-2 mt-2">
@@ -39,11 +39,17 @@ export const AnalysisList = ({ isLoading, analyses }: AnalysisListProps) => {
                     {analysis.risk_level} Risk
                   </span>
                 </div>
-                {analysis.entry_price && (
-                  <p className="text-sm text-gray-600 mt-1">
-                    Entry Price: ${analysis.entry_price}
-                  </p>
-                )}
+                <div className="mt-2 text-sm text-gray-600">
+                  {analysis.entry_price && (
+                    <p>Entry Price: ${analysis.entry_price}</p>
+                  )}
+                  {analysis.target_price && (
+                    <p>Target Price: ${analysis.target_price}</p>
+                  )}
+                  {analysis.stop_loss && (
+                    <p>Stop Loss: ${analysis.stop_loss}</p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
