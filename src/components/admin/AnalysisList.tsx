@@ -9,6 +9,7 @@ import {
 import { Analysis } from "@/types/analysis";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChartLineUp, ArrowUpRight, ArrowDownRight, Ban } from "lucide-react";
 
 export const AnalysisList = () => {
   const { data: analyses, isLoading, error } = useQuery({
@@ -27,11 +28,36 @@ export const AnalysisList = () => {
     },
   });
 
+  const getRiskColor = (risk: string) => {
+    switch (risk.toLowerCase()) {
+      case 'high':
+        return 'text-red-600';
+      case 'medium':
+        return 'text-yellow-600';
+      case 'low':
+        return 'text-green-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
+  const getDirectionIcon = (content: string) => {
+    if (content.toLowerCase().includes('buy') || content.toLowerCase().includes('long')) {
+      return <ArrowUpRight className="w-5 h-5 text-green-600" />;
+    } else if (content.toLowerCase().includes('sell') || content.toLowerCase().includes('short')) {
+      return <ArrowDownRight className="w-5 h-5 text-red-600" />;
+    }
+    return <Ban className="w-5 h-5 text-gray-600" />;
+  };
+
   if (error) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Recent Analysis Posts</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ChartLineUp className="w-6 h-6" />
+            Market Analysis Posts
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-red-500">Failed to load analyses</div>
@@ -41,9 +67,12 @@ export const AnalysisList = () => {
   }
 
   return (
-    <Card>
+    <Card className="bg-white shadow-md">
       <CardHeader>
-        <CardTitle>Recent Analysis Posts</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <ChartLineUp className="w-6 h-6" />
+          Market Analysis Posts
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -53,27 +82,52 @@ export const AnalysisList = () => {
             <Skeleton className="h-20 w-full" />
           </div>
         ) : analyses && analyses.length > 0 ? (
-          <div className="space-y-4">
-            {analyses.map((analysis: Analysis) => (
-              <div key={analysis.id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">{analysis.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {analysis.content.substring(0, 150)}...
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Direction</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Asset</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Title</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Entry</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Target</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Stop Loss</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Risk Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analyses.map((analysis: Analysis) => (
+                  <tr 
+                    key={analysis.id} 
+                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-4 py-3">
+                      {getDirectionIcon(analysis.content)}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium">
                       {analysis.asset_type}
-                    </span>
-                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                      {analysis.risk_level} Risk
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {analysis.title}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-mono">
+                      {analysis.entry_price || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-mono">
+                      {analysis.target_price || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-mono">
+                      {analysis.stop_loss || '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-sm font-medium ${getRiskColor(analysis.risk_level)}`}>
+                        {analysis.risk_level}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="text-center text-gray-500 py-8">

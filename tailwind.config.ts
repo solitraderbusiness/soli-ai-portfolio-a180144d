@@ -55,6 +55,7 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",
