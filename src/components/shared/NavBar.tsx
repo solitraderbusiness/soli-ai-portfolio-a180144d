@@ -12,54 +12,95 @@ const NavBar = () => {
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          return;
+        }
 
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
+        console.log("Current session:", session); // Debug log
+        setUser(session?.user ?? null);
 
-        setUserRole(profile?.role ?? null);
+        if (session?.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) {
+            console.error("Profile fetch error:", profileError);
+            return;
+          }
+
+          console.log("User profile:", profile); // Debug log
+          setUserRole(profile?.role ?? null);
+        }
+      } catch (error) {
+        console.error("Error checking user:", error);
       }
     };
 
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change:", event, session); // Debug log
+
       if (event === 'SIGNED_OUT') {
+        console.log("User signed out, clearing state"); // Debug log
         setUser(null);
         setUserRole(null);
-        navigate('/');
+        
+        // Clear any potential stored session data
+        localStorage.removeItem('supabase.auth.token');
+        
+        // Navigate to home page
+        navigate('/', { replace: true });
       } else if (session?.user) {
+        console.log("User session updated:", session.user); // Debug log
         setUser(session.user);
-        const { data: profile } = await supabase
+        
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', session.user.id)
           .single();
+
+        if (profileError) {
+          console.error("Profile fetch error on auth change:", profileError);
+          return;
+        }
 
         setUserRole(profile?.role ?? null);
       }
     });
 
     return () => {
+      console.log("Cleaning up auth listener"); // Debug log
       subscription.unsubscribe();
     };
   }, [navigate]);
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      console.log("Initiating logout"); // Debug log
       
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast.error("Failed to log out: " + error.message);
+        return;
+      }
+
+      // The onAuthStateChange listener will handle state cleanup and navigation
       toast.success("Logged out successfully");
-      // The onAuthStateChange listener will handle navigation and state cleanup
+      
     } catch (error) {
-      console.error("Error logging out:", error);
-      toast.error("Failed to log out");
+      console.error("Error during logout:", error);
+      toast.error("An unexpected error occurred during logout");
     }
   };
 
@@ -88,7 +129,11 @@ const NavBar = () => {
                   </Link>
                 )}
 
-                <Button onClick={handleLogout} variant="outline">
+                <Button 
+                  onClick={handleLogout} 
+                  variant="outline"
+                  data-testid="logout-button"
+                >
                   Logout
                 </Button>
               </>
