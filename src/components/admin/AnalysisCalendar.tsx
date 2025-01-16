@@ -12,13 +12,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const AnalysisCalendar = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const navigate = useNavigate();
 
-  const { data: analyses } = useQuery({
-    queryKey: ['analyses'],
+  const { data: analyses, isLoading, error } = useQuery({
+    queryKey: ['analyses-calendar'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('analysis_posts')
@@ -26,7 +27,7 @@ export const AnalysisCalendar = () => {
         .order('publish_date', { ascending: false });
       
       if (error) {
-        toast.error("Failed to fetch analyses");
+        toast.error("Failed to fetch analyses for calendar");
         throw error;
       }
       return data as Analysis[];
@@ -50,36 +51,55 @@ export const AnalysisCalendar = () => {
     navigate(`/daily-analyses/${formattedDate}`);
   };
 
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Analysis Calendar</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">Failed to load calendar data</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Analysis Calendar</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 flex gap-4 items-center">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-sm text-gray-600">Has Analyses</span>
-          </div>
-        </div>
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={handleDateSelect}
-          className="rounded-md border"
-          modifiers={{
-            hasAnalysis: (date) => {
-              const dateStr = format(date, 'yyyy-MM-dd');
-              return !!analysisDateMap?.[dateStr];
-            },
-          }}
-          modifiersStyles={{
-            hasAnalysis: {
-              color: 'white',
-              backgroundColor: '#3b82f6',
-            },
-          }}
-        />
+        {isLoading ? (
+          <Skeleton className="h-[400px] w-full" />
+        ) : (
+          <>
+            <div className="mb-4 flex gap-4 items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-sm text-gray-600">Has Analyses</span>
+              </div>
+            </div>
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={handleDateSelect}
+              className="rounded-md border"
+              modifiers={{
+                hasAnalysis: (date) => {
+                  const dateStr = format(date, 'yyyy-MM-dd');
+                  return !!analysisDateMap?.[dateStr];
+                },
+              }}
+              modifiersStyles={{
+                hasAnalysis: {
+                  color: 'white',
+                  backgroundColor: '#3b82f6',
+                },
+              }}
+            />
+          </>
+        )}
       </CardContent>
     </Card>
   );

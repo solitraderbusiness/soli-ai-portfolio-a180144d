@@ -7,9 +7,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Analysis } from "@/types/analysis";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const AnalysisList = () => {
-  const { data: analyses, isLoading } = useQuery({
+  const { data: analyses, isLoading, error } = useQuery({
     queryKey: ['analyses'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -17,10 +19,26 @@ export const AnalysisList = () => {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        toast.error("Failed to fetch analyses");
+        throw error;
+      }
       return data as Analysis[];
     },
   });
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Analysis Posts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">Failed to load analyses</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -29,11 +47,15 @@ export const AnalysisList = () => {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div>Loading analyses...</div>
-        ) : (
           <div className="space-y-4">
-            {analyses?.map((analysis: Analysis) => (
-              <div key={analysis.id} className="border-b pb-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        ) : analyses && analyses.length > 0 ? (
+          <div className="space-y-4">
+            {analyses.map((analysis: Analysis) => (
+              <div key={analysis.id} className="border rounded-lg p-4">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium">{analysis.title}</h3>
@@ -52,6 +74,10 @@ export const AnalysisList = () => {
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 py-8">
+            No analysis posts found. Create your first analysis using the form above.
           </div>
         )}
       </CardContent>
