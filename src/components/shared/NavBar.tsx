@@ -56,8 +56,8 @@ const NavBar = () => {
         // Clear any potential stored session data
         localStorage.removeItem('supabase.auth.token');
         
-        // Force navigation to home page
-        window.location.href = '/';
+        // Redirect to login page
+        window.location.href = '/login';
       } else if (session?.user) {
         console.log("User session updated:", session.user);
         setUser(session.user);
@@ -98,8 +98,8 @@ const NavBar = () => {
         return;
       }
 
-      // Force a page reload to ensure clean state
-      window.location.href = '/';
+      // Redirect to login page
+      window.location.href = '/login';
       
     } catch (error) {
       console.error("Error during logout:", error);
