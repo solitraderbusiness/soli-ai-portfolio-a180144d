@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const questions = [
@@ -81,20 +81,23 @@ const calculateRiskLevel = (answers: Record<number, string>): "Low" | "Medium" |
 const RiskAssessment = () => {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (Object.keys(answers).length !== questions.length) {
-      toast({
-        title: "Error",
-        description: "Please answer all questions",
-        variant: "destructive",
-      });
+      toast.error("Please answer all questions");
       return;
     }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("User not authenticated");
+        return;
+      }
+
       const riskLevel = calculateRiskLevel(answers);
       
       const { error } = await supabase
@@ -103,27 +106,20 @@ const RiskAssessment = () => {
           risk_level: riskLevel,
           personality_profile: answers
         })
-        .eq('id', (await supabase.auth.getUser()).data.user?.id);
+        .eq('id', user.id);
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Risk assessment completed",
-      });
+      toast.success("Risk assessment completed successfully");
       navigate("/dashboard");
     } catch (error) {
       console.error('Error saving risk assessment:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save risk assessment",
-        variant: "destructive",
-      });
+      toast.error("Failed to save risk assessment");
     }
   };
 
   return (
-    <Card className="w-[600px]">
+    <Card className="w-full max-w-[600px] mx-auto">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-center">
           Risk Assessment
@@ -141,6 +137,7 @@ const RiskAssessment = () => {
                 onValueChange={(value) =>
                   setAnswers((prev) => ({ ...prev, [q.id]: value }))
                 }
+                value={answers[q.id]}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select an option" />

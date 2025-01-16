@@ -15,7 +15,7 @@ function App() {
     <Router>
       <Toaster />
       <NavBar />
-      <div className="min-h-screen bg-gray-50 pt-16"> {/* Added padding-top to account for fixed navbar */}
+      <div className="min-h-screen bg-gray-50 pt-16">
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Index />} />
@@ -35,7 +35,7 @@ function App() {
             path="/risk-assessment"
             element={
               <ProtectedRoute>
-                <div className="container mx-auto py-12 flex justify-center">
+                <div className="container mx-auto px-4 py-12">
                   <RiskAssessment />
                 </div>
               </ProtectedRoute>
