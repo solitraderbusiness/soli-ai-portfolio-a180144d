@@ -56,19 +56,23 @@ const NavBar = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+
       // Clear user state
       setUser(null);
       setUserRole(null);
-      
-      // Navigate to home page
-      navigate("/");
-      
+
+      // Show success toast
       toast({
         title: "Success",
         description: "You have been logged out successfully",
       });
+
+      // Force navigation to home page
+      window.location.href = "/";
     } catch (error) {
       console.error("Error logging out:", error);
       toast({
