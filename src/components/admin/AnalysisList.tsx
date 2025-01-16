@@ -9,7 +9,7 @@ import {
 import { Analysis } from "@/types/analysis";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChartLineUp, ArrowUpRight, ArrowDownRight, Ban } from "lucide-react";
+import { ChartLine, ArrowUpRight, ArrowDownRight, Ban } from "lucide-react";
 
 export const AnalysisList = () => {
   const { data: analyses, isLoading, error } = useQuery({
@@ -55,7 +55,7 @@ export const AnalysisList = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ChartLineUp className="w-6 h-6" />
+            <ChartLine className="w-6 h-6" />
             Market Analysis Posts
           </CardTitle>
         </CardHeader>
@@ -70,7 +70,7 @@ export const AnalysisList = () => {
     <Card className="bg-white shadow-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <ChartLineUp className="w-6 h-6" />
+          <ChartLine className="w-6 h-6" />
           Market Analysis Posts
         </CardTitle>
       </CardHeader>
