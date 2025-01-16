@@ -20,7 +20,7 @@ const NavBar = () => {
           return;
         }
 
-        console.log("Current session:", session); // Debug log
+        console.log("Current session:", session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
@@ -35,7 +35,7 @@ const NavBar = () => {
             return;
           }
 
-          console.log("User profile:", profile); // Debug log
+          console.log("User profile:", profile);
           setUserRole(profile?.role ?? null);
         }
       } catch (error) {
@@ -46,20 +46,20 @@ const NavBar = () => {
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change:", event, session); // Debug log
+      console.log("Auth state change:", event, session);
 
       if (event === 'SIGNED_OUT') {
-        console.log("User signed out, clearing state"); // Debug log
+        console.log("User signed out, clearing state");
         setUser(null);
         setUserRole(null);
         
         // Clear any potential stored session data
         localStorage.removeItem('supabase.auth.token');
         
-        // Navigate to home page
-        navigate('/', { replace: true });
+        // Force navigation to home page
+        window.location.href = '/';
       } else if (session?.user) {
-        console.log("User session updated:", session.user); // Debug log
+        console.log("User session updated:", session.user);
         setUser(session.user);
         
         const { data: profile, error: profileError } = await supabase
@@ -78,14 +78,17 @@ const NavBar = () => {
     });
 
     return () => {
-      console.log("Cleaning up auth listener"); // Debug log
+      console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, []);
 
   const handleLogout = async () => {
     try {
-      console.log("Initiating logout"); // Debug log
+      console.log("Initiating logout");
+      
+      // Clear local storage first
+      localStorage.removeItem('supabase.auth.token');
       
       const { error } = await supabase.auth.signOut();
       
@@ -95,8 +98,8 @@ const NavBar = () => {
         return;
       }
 
-      // The onAuthStateChange listener will handle state cleanup and navigation
-      toast.success("Logged out successfully");
+      // Force a page reload to ensure clean state
+      window.location.href = '/';
       
     } catch (error) {
       console.error("Error during logout:", error);
