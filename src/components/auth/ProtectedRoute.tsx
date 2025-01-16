@@ -31,33 +31,35 @@ const ProtectedRoute = ({ children, roleRequired }: ProtectedRouteProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    let mounted = true;
-
     const checkUser = async () => {
       try {
-        // Get the current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (sessionError) throw sessionError;
-
-        if (mounted) {
-          setUser(session?.user ?? null);
-
-          if (session?.user) {
-            // Get the user's profile
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-
-            if (profileError) throw profileError;
-
-            if (mounted) {
-              setUserRole(profile?.role ?? null);
-            }
-          }
+        if (!session?.user) {
+          setLoading(false);
+          return;
         }
+
+        setUser(session.user);
+
+        // Get the user's profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          toast({
+            title: "Error",
+            description: "Failed to fetch user profile",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setUserRole(profile?.role ?? null);
       } catch (error) {
         console.error('Error checking auth state:', error);
         toast({
@@ -66,38 +68,32 @@ const ProtectedRoute = ({ children, roleRequired }: ProtectedRouteProps) => {
           variant: "destructive",
         });
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (mounted) {
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setUserRole(null);
+        return;
+      }
 
-          if (mounted) {
-            setUserRole(profile?.role ?? null);
-          }
-        } else {
-          if (mounted) {
-            setUserRole(null);
-          }
-        }
+      if (session?.user) {
+        setUser(session.user);
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        setUserRole(profile?.role ?? null);
       }
     });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, [toast]);

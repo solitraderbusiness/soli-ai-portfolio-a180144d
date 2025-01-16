@@ -1,8 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { User } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 
 const NavBar = () => {
@@ -12,30 +12,24 @@ const NavBar = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session and user role
-    const getInitialSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
 
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-          
-          setUserRole(profile?.role ?? null);
-        }
-      } catch (error) {
-        console.error("Error getting session:", error);
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        setUserRole(profile?.role ?? null);
       }
     };
 
-    getInitialSession();
+    checkUser();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
@@ -44,84 +38,83 @@ const NavBar = () => {
           .select('role')
           .eq('id', session.user.id)
           .single();
-        
+
         setUserRole(profile?.role ?? null);
       } else {
         setUserRole(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // Clear user state
       setUser(null);
       setUserRole(null);
-
-      // Show success toast
+      
       toast({
         title: "Success",
         description: "You have been logged out successfully",
       });
 
-      // Force navigation to home page
-      window.location.href = "/";
+      navigate("/");
+      window.location.reload();
     } catch (error) {
       console.error("Error logging out:", error);
       toast({
         title: "Error",
-        description: "Failed to log out. Please try again.",
+        description: "Failed to log out",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-primary py-4 px-6 shadow-lg z-50">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-white text-xl font-bold">
-          PortfolioManager
-        </Link>
-        <div className="space-x-4">
-          {user ? (
-            <>
-              <Link to="/dashboard" className="text-white hover:text-gray-200">
-                Dashboard
-              </Link>
-              {(userRole === 'analyst' || userRole === 'admin') && (
-                <Link to="/admin" className="text-white hover:text-gray-200">
-                  Analyst Dashboard
+    <nav className="bg-white shadow-sm fixed w-full z-50">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between h-16 items-center">
+          <Link to="/" className="text-xl font-bold text-blue-600">
+            RiskWise
+          </Link>
+
+          <div className="flex items-center gap-4">
+            {user ? (
+              <>
+                <Link to="/dashboard">
+                  <Button variant="ghost">Dashboard</Button>
                 </Link>
-              )}
-              <span className="text-white">{user.email}</span>
-              <Button
-                variant="secondary"
-                className="hover:bg-secondary/90"
-                onClick={handleLogout}
-              >
-                Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="text-white hover:text-gray-200">
-                Login
-              </Link>
-              <Link
-                to="/register"
-                className="bg-secondary px-4 py-2 rounded-lg text-white hover:bg-secondary/90"
-              >
-                Register
-              </Link>
-            </>
-          )}
+                
+                <Link to="/risk-assessment">
+                  <Button variant="ghost">Risk Assessment</Button>
+                </Link>
+
+                {(userRole === 'analyst' || userRole === 'admin') && (
+                  <Link to="/admin">
+                    <Button variant="ghost">Admin</Button>
+                  </Link>
+                )}
+
+                <Button onClick={handleLogout} variant="outline">
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost">Login</Button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="outline">Register</Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>
