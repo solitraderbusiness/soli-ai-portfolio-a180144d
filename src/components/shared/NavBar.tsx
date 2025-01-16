@@ -20,7 +20,6 @@ const NavBar = () => {
           return;
         }
 
-        console.log("Current session:", session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
@@ -35,7 +34,6 @@ const NavBar = () => {
             return;
           }
 
-          console.log("User profile:", profile);
           setUserRole(profile?.role ?? null);
         }
       } catch (error) {
@@ -56,10 +54,9 @@ const NavBar = () => {
         // Clear any potential stored session data
         localStorage.removeItem('supabase.auth.token');
         
-        // Redirect to login page
-        window.location.href = '/login';
+        // Navigate to login page using React Router
+        navigate('/login', { replace: true });
       } else if (session?.user) {
-        console.log("User session updated:", session.user);
         setUser(session.user);
         
         const { data: profile, error: profileError } = await supabase
@@ -81,7 +78,7 @@ const NavBar = () => {
       console.log("Cleaning up auth listener");
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
@@ -98,8 +95,8 @@ const NavBar = () => {
         return;
       }
 
-      // Redirect to login page
-      window.location.href = '/login';
+      // Use React Router for navigation
+      navigate('/login', { replace: true });
       
     } catch (error) {
       console.error("Error during logout:", error);
