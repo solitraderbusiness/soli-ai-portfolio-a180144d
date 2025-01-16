@@ -29,9 +29,12 @@ const NavBar = () => {
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setUserRole(null);
+        navigate('/');
+      } else if (session?.user) {
+        setUser(session.user);
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -39,24 +42,21 @@ const NavBar = () => {
           .single();
 
         setUserRole(profile?.role ?? null);
-      } else {
-        setUserRole(null);
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setUserRole(null);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       toast.success("Logged out successfully");
-      navigate("/");
-      window.location.reload(); // Force a full page reload to clear all states
+      // The onAuthStateChange listener will handle navigation and state cleanup
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error("Failed to log out");
